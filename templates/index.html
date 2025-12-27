@@ -323,9 +323,29 @@
             loadDomains();
         }
 
+        let lastCookieData = ""; // Global state for diffing
+
         async function loadCookies() {
             const res = await fetch('/api/cookies');
             const data = await res.json();
+
+            // Optimization 1: Data diff check
+            const currentDataStr = JSON.stringify(data.cookies);
+            if (currentDataStr === lastCookieData) {
+                return; // Nothing changed, skip render
+            }
+
+            // Optimization 2: Selection check
+            // If user has selected text, pause updates to prevent clearing selection
+            const selection = document.getSelection();
+            if (selection && selection.type === 'Range' && !selection.isCollapsed) {
+                console.log("Skipping update due to active selection");
+                return;
+            }
+
+            // Update local state
+            lastCookieData = currentDataStr;
+
             const table = document.getElementById('cookieTable');
             table.innerHTML = '';
 
@@ -341,7 +361,7 @@
                     timeStr = timeStr.split('.')[0];
                 }
 
-                // Parse cookies
+                // Robust parsing for cookies: split by semicolon OR comma
                 let raw = c.full_cookie_header;
                 let parts = raw.split(/[;,]\s*/).filter(s => s.trim().length > 0);
 
@@ -428,7 +448,7 @@
             });
 
             const msg = document.getElementById('configMsg');
-            msg.innerText = "Credentials saved.";
+            msg.innerText = "Credentials saved securely.";
             setTimeout(() => msg.innerText = "", 3000);
             loadConfig();
         }
