@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MITM Cookie Catcher</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #f4f6f8;
+        }
+
+        h1 {
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .main {
+            flex: 1;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            width: 100%;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .domain-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        .domain-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            width: auto;
+            padding: 2px 8px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            word-break: break-all;
+        }
+
+        th {
+            background: #fafafa;
+        }
+
+        .timestamp {
+            white-space: nowrap;
+            width: 160px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .domain-col {
+            width: 200px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>MITM Cookie Catcher</h1>
+
+    <div class="container">
+        <div class="sidebar">
+            <h3>Watchlist</h3>
+            <input type="text" id="domainInput" placeholder="e.g. example.com">
+            <button onclick="addDomain()">Add Domain</button>
+            <ul class="domain-list" id="domainList">
+                <!-- Domains here -->
+            </ul>
+
+            <div style="margin-top: 30px; border-top: 2px solid #ddd; padding-top: 10px;">
+                <h3>Proxy Settings</h3>
+                <input type="text" id="proxyUser" placeholder="Username">
+                <input type="password" id="proxyPass" placeholder="Password">
+                <button onclick="saveConfig()">Save Settings</button>
+                <div id="configMsg" style="margin-top:5px; font-size:0.9em; color:green;"></div>
+            </div>
+        </div>
+
+        <div class="main">
+            <h3>Captured Cookies</h3>
+            <button onclick="loadCookies()"
+                style="width: auto; margin-bottom: 10px; background: #28a745;">Refresh</button>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Last Updated</th>
+                        <th>Domain</th>
+                        <th>Content</th>
+                    </tr>
+                </thead>
+                <tbody id="cookieTable">
+                    <!-- Cookies here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Init
+        loadDomains();
+        loadCookies();
+        loadConfig();
+
+        // Auto-refresh cookies every 3 seconds
+        setInterval(loadCookies, 3000);
+
+        async function loadDomains() {
+            const res = await fetch('/api/domains');
+            const data = await res.json();
+            const list = document.getElementById('domainList');
+            list.innerHTML = '';
+            data.domains.forEach(d => {
+                const li = document.createElement('li');
+                li.innerHTML = `<span>${d}</span> <button class="delete-btn" onclick="deleteDomain('${d}')">X</button>`;
+                list.appendChild(li);
+            });
+        }
+
+        async function addDomain() {
+            const input = document.getElementById('domainInput');
+            const domain = input.value.trim();
+            if (!domain) return;
+            await fetch('/api/domains', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ domain })
+            });
+            input.value = '';
+            loadDomains();
+        }
+
+        async function deleteDomain(domain) {
+            await fetch(`/api/domains/${domain}`, { method: 'DELETE' });
+            loadDomains();
+        }
+
+        async function loadCookies() {
+            const res = await fetch('/api/cookies');
+            const data = await res.json();
+            const tbody = document.getElementById('cookieTable');
+            tbody.innerHTML = '';
+            data.cookies.forEach(c => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="timestamp">${c.last_updated}</td>
+                    <td class="domain-col">${c.domain}</td>
+                    <td><div style="max-height: 100px; overflow-y: auto;">${escapeHtml(c.full_cookie_header)}</div></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function loadConfig() {
+            const res = await fetch('/api/config');
+            const data = await res.json();
+            if (data.proxy_username) {
+                document.getElementById('proxyUser').value = data.proxy_username;
+            }
+            if (data.proxy_password_set) {
+                document.getElementById('proxyPass').placeholder = "******";
+            }
+        }
+
+        async function saveConfig() {
+            const username = document.getElementById('proxyUser').value.trim();
+            const password = document.getElementById('proxyPass').value.trim();
+
+            if (!username || (!password && document.getElementById('proxyPass').placeholder !== "******")) {
+                alert("Please enter both username and password");
+                return;
+            }
+
+            const body = { username };
+            if (password) body.password = password;
+
+            await fetch('/api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            document.getElementById('configMsg').innerText = "Settings saved!";
+            setTimeout(() => document.getElementById('configMsg').innerText = "", 3000);
+            loadConfig();
+        }
+
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text.replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+
+</html>
