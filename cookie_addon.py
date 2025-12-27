@@ -9,6 +9,9 @@ import base64
 
 # Let's rewrite the class to be cleaner and verify domain access
 class CookieCatcherAddon:
+    def __init__(self):
+        self.authorized_connections = set()
+
     def tls_clienthello(self, data: layers.tls.ClientHelloData):
         sni = data.client_hello.sni
         if not sni:
@@ -19,6 +22,11 @@ class CookieCatcherAddon:
         else:
             logging.info(f"Ignoring connection for {sni} (not in watchlist)")
             data.ignore_connection = True
+
+    def client_disconnected(self, client):
+        # Clean up authorized connection state to prevent memory leak
+        if client.id in self.authorized_connections:
+            self.authorized_connections.discard(client.id)
 
     def is_watched(self, host: str) -> bool:
         watched_domains = database.get_domains()
@@ -37,7 +45,7 @@ class CookieCatcherAddon:
         # Handle HTTPS CONNECT - Enforce Auth
         if self.authenticate(flow):
             # Mark connection as authorized
-            flow.client_conn.metadata["authorized"] = True
+            self.authorized_connections.add(flow.client_conn.id)
         else:
             # check_and_process not needed for CONNECT
             pass
@@ -45,12 +53,12 @@ class CookieCatcherAddon:
     def request(self, flow: http.HTTPFlow):
         # Handle plain HTTP - Enforce Auth
         # If connection is already authorized (via CONNECT), skip check
-        if flow.client_conn.metadata.get("authorized"):
+        if flow.client_conn.id in self.authorized_connections:
             pass
         elif self.authenticate(flow):
              # Valid auth on this request. Mark connection authorized for keep-alive?
              # For HTTP/1.1 keep-alive, yes.
-             flow.client_conn.metadata["authorized"] = True
+             self.authorized_connections.add(flow.client_conn.id)
         else:
              return
 
