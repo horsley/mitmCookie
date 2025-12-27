@@ -25,7 +25,7 @@
         }
 
         .sidebar {
-            width: 300px;
+            width: 220px;
             background: white;
             padding: 20px;
             border-radius: 8px;
@@ -40,61 +40,23 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        input[type="text"],
-        input[type="password"] {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-            margin-bottom: 10px;
-        }
-
-        button {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 10px;
-            cursor: pointer;
-            width: 100%;
-            border-radius: 4px;
-        }
-
-        button:hover {
-            background: #0056b3;
-        }
-
-        .domain-list {
-            list-style: none;
-            padding: 0;
-            margin-top: 20px;
-        }
-
-        .domain-list li {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
-        }
-
-        .delete-btn {
-            background: #dc3545;
-            width: auto;
-            padding: 2px 8px;
-            font-size: 12px;
-            margin-left: 10px;
-        }
+        /* ... existing styles ... */
 
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
+            table-layout: fixed;
+            /* helps with overflow */
         }
 
         th,
         td {
             text-align: left;
-            padding: 12px;
+            padding: 8px;
             border-bottom: 1px solid #ddd;
             word-break: break-all;
+            vertical-align: top;
         }
 
         th {
@@ -103,13 +65,25 @@
 
         .timestamp {
             white-space: nowrap;
-            width: 160px;
+            width: 140px;
             color: #666;
             font-size: 0.9em;
         }
 
         .domain-col {
-            width: 200px;
+            width: 15rem;
+        }
+
+        .name-col {
+            width: 15%;
+            font-weight: bold;
+            color: #444;
+        }
+
+        .value-col {
+            /* Takes remaining space */
+            font-family: monospace;
+            background: #fdfdfd;
         }
     </style>
 </head>
@@ -145,10 +119,11 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Last Updated</th>
-                        <th>Domain</th>
-                        <th>Content</th>
-                        <th style="width: 50px;">Action</th>
+                        <th class="timestamp">Time</th>
+                        <th class="domain-col">Domain</th>
+                        <th class="name-col">Name</th>
+                        <th>Value</th>
+                        <th style="width: 50px;">Act</th>
                     </tr>
                 </thead>
                 <tbody id="cookieTable">
@@ -202,15 +177,56 @@
             const data = await res.json();
             const tbody = document.getElementById('cookieTable');
             tbody.innerHTML = '';
+
             data.cookies.forEach(c => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="timestamp">${c.last_updated}</td>
-                    <td class="domain-col">${c.domain}</td>
-                    <td><div style="max-height: 100px; overflow-y: auto;">${escapeHtml(c.full_cookie_header)}</div></td>
-                    <td><button class="delete-btn" onclick="deleteCookie(${c.id})">X</button></td>
-                `;
-                tbody.appendChild(tr);
+                // Parse timestamp - remove microseconds
+                // simplistic approach: split at '.' if present
+                let timeStr = c.last_updated;
+                if (timeStr.includes('.')) {
+                    timeStr = timeStr.split('.')[0];
+                }
+
+                // Parse cookies string into k-v pairs
+                // Format: "key=value; key2=value2"
+                let parts = c.full_cookie_header.split(';').map(s => s.trim()).filter(s => s);
+                if (parts.length === 0) {
+                    // Empty case
+                    parts = ["(empty)="];
+                }
+
+                const pairs = parts.map(p => {
+                    const idx = p.indexOf('=');
+                    if (idx === -1) return { k: p, v: "" };
+                    return { k: p.substring(0, idx), v: p.substring(idx + 1) };
+                });
+
+                // Render rows
+                // First row has the main meta info and rowspan
+                const rowSpan = pairs.length;
+
+                pairs.forEach((pair, index) => {
+                    const tr = document.createElement('tr');
+
+                    if (index === 0) {
+                        // Main columns
+                        tr.innerHTML = `
+                            <td class="timestamp" rowspan="${rowSpan}">${timeStr}</td>
+                            <td class="domain-col" rowspan="${rowSpan}">${c.domain}</td>
+                            <td class="name-col">${escapeHtml(pair.k)}</td>
+                            <td class="value-col">${escapeHtml(pair.v)}</td>
+                            <td rowspan="${rowSpan}" style="text-align:center;">
+                                <button class="delete-btn" onclick="deleteCookie(${c.id})">X</button>
+                            </td>
+                        `;
+                    } else {
+                        // Sub rows only have cookie parts
+                        tr.innerHTML = `
+                            <td class="name-col">${escapeHtml(pair.k)}</td>
+                            <td class="value-col">${escapeHtml(pair.v)}</td>
+                        `;
+                    }
+                    tbody.appendChild(tr);
+                });
             });
         }
 
