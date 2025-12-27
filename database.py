@@ -72,6 +72,24 @@ def remove_domain(domain):
     finally:
         conn.close()
 
+def delete_cookie(cookie_id):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    try:
+        c.execute("DELETE FROM cookies WHERE id=?", (cookie_id,))
+        conn.commit()
+    finally:
+        conn.close()
+
+def clear_cookies():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    try:
+        c.execute("DELETE FROM cookies")
+        conn.commit()
+    finally:
+        conn.close()
+
 def upsert_cookie(domain, content, full_header):
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()

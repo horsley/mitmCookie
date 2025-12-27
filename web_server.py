@@ -68,5 +68,15 @@ def get_cookies():
     # Return cookies
     return {"cookies": database.get_cookies()}
 
+@app.delete("/api/cookies")
+def clear_cookies():
+    database.clear_cookies()
+    return {"status": "ok", "cookies": database.get_cookies()}
+
+@app.delete("/api/cookies/{cookie_id}")
+def delete_cookie(cookie_id: int):
+    database.delete_cookie(cookie_id)
+    return {"status": "ok", "cookies": database.get_cookies()}
+
 def run_server(host="0.0.0.0", port=8081):
     uvicorn.run(app, host=host, port=port)

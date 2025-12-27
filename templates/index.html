@@ -40,7 +40,8 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        input[type="text"] {
+        input[type="text"],
+        input[type="password"] {
             width: 100%;
             padding: 8px;
             box-sizing: border-box;
@@ -136,14 +137,18 @@
 
         <div class="main">
             <h3>Captured Cookies</h3>
-            <button onclick="loadCookies()"
-                style="width: auto; margin-bottom: 10px; background: #28a745;">Refresh</button>
+            <div style="margin-bottom: 10px;">
+                <button onclick="loadCookies()"
+                    style="width: auto; background: #28a745; margin-right: 10px;">Refresh</button>
+                <button onclick="clearAllCookies()" style="width: auto; background: #dc3545;">Clear All</button>
+            </div>
             <table>
                 <thead>
                     <tr>
                         <th>Last Updated</th>
                         <th>Domain</th>
                         <th>Content</th>
+                        <th style="width: 50px;">Action</th>
                     </tr>
                 </thead>
                 <tbody id="cookieTable">
@@ -203,6 +208,7 @@
                     <td class="timestamp">${c.last_updated}</td>
                     <td class="domain-col">${c.domain}</td>
                     <td><div style="max-height: 100px; overflow-y: auto;">${escapeHtml(c.full_cookie_header)}</div></td>
+                    <td><button class="delete-btn" onclick="deleteCookie(${c.id})">X</button></td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -240,6 +246,18 @@
             document.getElementById('configMsg').innerText = "Settings saved!";
             setTimeout(() => document.getElementById('configMsg').innerText = "", 3000);
             loadConfig();
+        }
+
+        async function deleteCookie(id) {
+            if (!confirm("Delete this cookie?")) return;
+            await fetch(`/api/cookies/${id}`, { method: 'DELETE' });
+            loadCookies();
+        }
+
+        async function clearAllCookies() {
+            if (!confirm("Are you sure you want to delete ALL captured cookies?")) return;
+            await fetch('/api/cookies', { method: 'DELETE' });
+            loadCookies();
         }
 
         function escapeHtml(text) {
