@@ -20,7 +20,12 @@ def startup_event():
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    response = templates.TemplateResponse("index.html", {"request": request})
+    # Disable caching for the main page so updates are seen immediately
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.get("/api/domains")
 def get_domains():
@@ -31,6 +36,11 @@ async def add_domain(request: Request):
     data = await request.json()
     domain = data.get("domain")
     if domain:
+        # Normalize domain
+        if domain.startswith("*."):
+            domain = domain[2:]
+        elif domain.startswith("."):
+            domain = domain[1:]
         database.add_domain(domain)
     return {"status": "ok", "domains": database.get_domains()}
 

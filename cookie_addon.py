@@ -134,6 +134,12 @@ class CookieCatcherAddon:
         # Check if host matches any watched domain (exact or suffix)
         matched = False
         for d in watched_domains:
+            # Normalize domain: strip leading "*." or "."
+            if d.startswith("*."):
+                d = d[2:]
+            elif d.startswith("."):
+                d = d[1:]
+                
             if host == d or host.endswith("." + d):
                 matched = True
                 break
