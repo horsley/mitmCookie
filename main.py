@@ -6,6 +6,7 @@ from mitmproxy.tools.dump import DumpMaster
 from cookie_addon import CookieCatcherAddon
 from web_server import app
 import database
+import os
 
 # Configuration
 PROXY_PORT = 8080
@@ -19,7 +20,15 @@ def start_web_server():
 
 async def start_proxy():
     print(f"Starting Proxy at http://localhost:{PROXY_PORT}")
-    opts = options.Options(listen_host='0.0.0.0', listen_port=PROXY_PORT)
+    
+    onboarding_host = os.environ.get("MITM_ONBOARDING_HOST", "mitm.it")
+    print(f"Onboarding host set to: {onboarding_host}")
+    
+    opts = options.Options(
+        listen_host='0.0.0.0', 
+        listen_port=PROXY_PORT,
+        onboarding_host=onboarding_host
+    )
     
     master = DumpMaster(opts, with_termlog=False, with_dumper=False)
     master.addons.add(CookieCatcherAddon())
