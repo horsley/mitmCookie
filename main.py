@@ -31,6 +31,7 @@ def start_web_server():
 async def start_proxy():
     print(f"Starting Proxy at http://localhost:{PROXY_PORT}")
     
+    onboarding_host = os.environ.get("MITM_ONBOARDING_HOST", "mitm.it")
     print(f"Onboarding host set to: {onboarding_host}")
     
     # Check for persistent configuration directory
