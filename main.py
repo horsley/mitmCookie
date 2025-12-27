@@ -31,12 +31,20 @@ def start_web_server():
 async def start_proxy():
     print(f"Starting Proxy at http://localhost:{PROXY_PORT}")
     
-    onboarding_host = os.environ.get("MITM_ONBOARDING_HOST", "mitm.it")
     print(f"Onboarding host set to: {onboarding_host}")
+    
+    # Check for persistent configuration directory
+    conf_dir = "~/.mitmproxy"
+    if os.path.exists("/data") and os.path.isdir("/data"):
+        conf_dir = "/data/mitmproxy"
+        if not os.path.exists(conf_dir):
+            os.makedirs(conf_dir)
+        print(f"Using persistent mitmproxy config dir: {conf_dir}")
     
     opts = options.Options(
         listen_host='0.0.0.0', 
-        listen_port=PROXY_PORT
+        listen_port=PROXY_PORT,
+        confdir=conf_dir
     )
     
     master = DumpMaster(opts, with_termlog=False, with_dumper=False)
