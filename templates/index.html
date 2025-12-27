@@ -5,9 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MITM Cookie Catcher</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #4f46e5;
@@ -23,9 +20,9 @@
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            padding: 40px 20px;
-            max-width: 1280px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            padding: 2rem;
+            max-width: 1400px;
             margin: 0 auto;
             background: var(--bg);
             color: var(--text-main);
@@ -33,7 +30,7 @@
         }
 
         h1 {
-            font-size: 1.875rem;
+            font-size: 1.5rem;
             font-weight: 600;
             margin-bottom: 2rem;
             color: var(--text-main);
@@ -41,23 +38,23 @@
         }
 
         h3 {
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 600;
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
             margin-top: 0;
             color: var(--text-main);
         }
 
         .container {
             display: flex;
-            gap: 2rem;
+            gap: 1.5rem;
             align-items: flex-start;
         }
 
         .sidebar {
-            width: 260px;
+            width: 180px;
             background: var(--card-bg);
-            padding: 1.5rem;
+            padding: 1rem;
             border-radius: 0.75rem;
             box-shadow: var(--shadow);
             border: 1px solid var(--border);
@@ -67,7 +64,7 @@
         .main {
             flex: 1;
             background: var(--card-bg);
-            padding: 1.5rem;
+            padding: 1rem;
             border-radius: 0.75rem;
             box-shadow: var(--shadow);
             border: 1px solid var(--border);
@@ -77,10 +74,10 @@
         input[type="text"],
         input[type="password"] {
             width: 100%;
-            padding: 0.625rem;
+            padding: 0.5rem;
             border: 1px solid var(--border);
             border-radius: 0.375rem;
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.5rem;
             font-size: 0.875rem;
             transition: border-color 0.15s;
             box-sizing: border-box;
@@ -96,10 +93,10 @@
             background: var(--primary);
             color: white;
             border: none;
-            padding: 0.625rem 1rem;
+            padding: 0.5rem 0.75rem;
             cursor: pointer;
             border-radius: 0.375rem;
-            font-size: 0.875rem;
+            font-size: 0.8rem;
             font-weight: 500;
             transition: all 0.2s;
             width: 100%;
@@ -107,11 +104,6 @@
 
         button:hover {
             background: var(--primary-hover);
-            transform: translateY(-1px);
-        }
-
-        button:active {
-            transform: translateY(0);
         }
 
         button.danger-btn {
@@ -125,7 +117,7 @@
         .action-bar {
             display: flex;
             gap: 0.75rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
 
         .action-bar button {
@@ -135,16 +127,16 @@
         .domain-list {
             list-style: none;
             padding: 0;
-            margin: 1rem 0 0 0;
+            margin: 0.5rem 0 0 0;
         }
 
         .domain-list li {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.5rem 0;
+            padding: 0.4rem 0;
             border-bottom: 1px solid var(--border);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
         .domain-list li:last-child {
@@ -155,9 +147,10 @@
             background: transparent;
             color: var(--text-muted);
             width: auto;
-            padding: 0.25rem 0.5rem;
+            padding: 0 0.25rem;
             font-size: 1.25rem;
             line-height: 1;
+            margin-left: 2px;
         }
 
         .delete-btn-sm:hover {
@@ -170,69 +163,82 @@
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
-            table-layout: fixed;
+            margin-bottom: 1rem;
         }
 
-        th {
-            text-align: left;
-            padding: 0.75rem 1rem;
+        tbody.cookie-group {
+            display: table-row-group;
+        }
+
+        /* Spacer row between groups */
+        tbody.cookie-group::before {
+            content: '';
+            display: block;
+            height: 1rem;
+        }
+
+        tbody.cookie-group:first-child::before {
+            height: 0;
+        }
+
+        /* Metadata Header Row */
+        .meta-row td {
             background: #f1f5f9;
-            color: var(--text-muted);
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
             font-weight: 600;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            border-bottom: 1px solid var(--border);
-        }
-
-        th:first-child {
+            color: var(--text-main);
             border-top-left-radius: 0.5rem;
-        }
-
-        th:last-child {
             border-top-right-radius: 0.5rem;
-        }
-
-        td {
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid var(--border);
-            vertical-align: top;
-            font-size: 0.875rem;
-            word-break: break-all;
-        }
-
-        tr:last-child td {
+            border: 1px solid var(--border);
             border-bottom: none;
         }
 
-        tr:hover td {
-            background: #f8fafc;
+        .meta-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .timestamp {
-            white-space: nowrap;
-            width: 140px;
-            color: var(--text-muted);
-            font-variant-numeric: tabular-nums;
+        .meta-info {
+            display: flex;
+            gap: 2rem;
         }
 
-        .domain-col {
-            width: 14rem;
-            font-weight: 500;
+        .meta-actions button {
+            width: auto;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.6rem;
+        }
+
+        /* KV Rows */
+        .kv-row td {
+            border: 1px solid var(--border);
+            border-top: none;
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            vertical-align: top;
+            background: white;
+            word-break: break-all;
+        }
+
+        .kv-row:last-child td {
+            border-bottom-left-radius: 0.5rem;
+            border-bottom-right-radius: 0.5rem;
         }
 
         .name-col {
-            width: 15%;
+            width: 180px;
+            min-width: 120px;
             font-weight: 600;
-            color: var(--text-main);
-            font-family: 'Inter', sans-serif;
+            color: var(--text-muted);
+            background: #fcfcfc !important;
         }
 
         .value-col {
             font-family: 'Monaco', 'Consolas', monospace;
-            color: #475569;
+            color: #334155;
             font-size: 0.8rem;
-            background: #f8fafc;
         }
     </style>
 </head>
@@ -243,7 +249,7 @@
     <div class="container">
         <div class="sidebar">
             <h3>Watchlist</h3>
-            <div style="display:flex; gap:0.5rem; margin-bottom:0.75rem;">
+            <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
                 <input type="text" id="domainInput" placeholder="e.g. example.com" style="margin-bottom:0;">
                 <button onclick="addDomain()" style="width:auto;">Add</button>
             </div>
@@ -251,12 +257,12 @@
                 <!-- Domains here -->
             </ul>
 
-            <div style="margin-top: 2.5rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">
+            <div style="margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 1rem;">
                 <h3>Proxy Auth</h3>
                 <input type="text" id="proxyUser" placeholder="Username">
                 <input type="password" id="proxyPass" placeholder="Password">
-                <button onclick="saveConfig()">Save Credentials</button>
-                <div id="configMsg" style="margin-top:0.5rem; font-size:0.875rem; color: #10b981; min-height: 1.25em;">
+                <button onclick="saveConfig()">Save</button>
+                <div id="configMsg" style="margin-top:0.5rem; font-size:0.75rem; color: #10b981; min-height: 1.25em;">
                 </div>
             </div>
         </div>
@@ -265,25 +271,15 @@
             <h3>Captured Cookies</h3>
             <div class="action-bar">
                 <button onclick="loadCookies()" style="background: #10b981;">
-                    Refresh Table
+                    Refresh List
                 </button>
                 <button onclick="clearAllCookies()" class="danger-btn">
-                    Clear All History
+                    Clear All
                 </button>
             </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th class="timestamp">Time</th>
-                        <th class="domain-col">Domain</th>
-                        <th class="name-col">Name</th>
-                        <th>Value</th>
-                        <th style="width: 60px; text-align:center;">Act</th>
-                    </tr>
-                </thead>
-                <tbody id="cookieTable">
-                    <!-- Cookies here -->
-                </tbody>
+
+            <table id="cookieTable">
+                <!-- Data populated here -->
             </table>
         </div>
     </div>
@@ -330,11 +326,11 @@
         async function loadCookies() {
             const res = await fetch('/api/cookies');
             const data = await res.json();
-            const tbody = document.getElementById('cookieTable');
-            tbody.innerHTML = '';
+            const table = document.getElementById('cookieTable');
+            table.innerHTML = '';
 
             if (data.cookies.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 2rem; color: var(--text-muted);">No cookies captured yet. Add a domain to the watchlist and visit it.</td></tr>';
+                table.innerHTML = '<tr><td style="text-align:center; padding: 2rem; color: var(--text-muted); border: 1px dashed var(--border); border-radius: 0.5rem;">No cookies captured yet. Add a domain to the watchlist and visit it.</td></tr>';
                 return;
             }
 
@@ -345,12 +341,8 @@
                     timeStr = timeStr.split('.')[0];
                 }
 
-                // Robust parsing for cookies: split by semicolon OR comma
-                // Many times clients/servers concatenate multiple cookies with commas if headers are folded.
+                // Parse cookies
                 let raw = c.full_cookie_header;
-
-                // Split by logical delimiters: semicolon or comma followed by optional space
-                // Filter out empty strings
                 let parts = raw.split(/[;,]\s*/).filter(s => s.trim().length > 0);
 
                 if (parts.length === 0) {
@@ -359,38 +351,50 @@
 
                 const pairs = parts.map(p => {
                     const idx = p.indexOf('=');
-                    if (idx === -1) {
-                        // Attribute without value or malformed
-                        return { k: p, v: "" };
-                    }
+                    if (idx === -1) return { k: p, v: "" };
                     return { k: p.substring(0, idx), v: p.substring(idx + 1) };
                 });
 
-                const rowSpan = pairs.length;
+                // Create a tbody for this cookie capture
+                const tbody = document.createElement('tbody');
+                tbody.className = 'cookie-group';
 
-                pairs.forEach((pair, index) => {
+                // 1. Meta Row (Header for this group)
+                const metaRow = document.createElement('tr');
+                metaRow.className = 'meta-row';
+                metaRow.innerHTML = `
+                    <td colspan="2">
+                        <div class="meta-content">
+                            <div class="meta-info">
+                                <span style="display:flex; align-items:center; gap:0.5rem;">
+                                    <svg style="width:14px;height:14px;opacity:0.6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+                                    ${timeStr}
+                                </span>
+                                <span style="display:flex; align-items:center; gap:0.5rem;">
+                                    <svg style="width:14px;height:14px;opacity:0.6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.004 6.004 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zm0 2c-.076 0-.232.032-.465.262-.238.234-.497.623-.737 1.182-.389.907-.673 2.142-.766 3.556h3.936c-.093-1.414-.377-2.649-.766-3.556-.24-.56-.5-.948-.737-1.182C10.232 4.032 10.076 4 10 4zm3.971 5c-.089-1.546-.383-2.97-.837-4.118A6.004 6.004 0 0115.917 9h-1.946zm-2.003 2H8.032c.093 1.414.377 2.649.766 3.556.24.56.5.948.737 1.182.233.23.389.262.465.262.076 0 .232-.032.465-.262.238-.234.497-.623.737-1.182.389-.907.673-2.142.766-3.556zm1.166 4.118c.454-1.147.748-2.572.837-4.118h1.946a6.004 6.004 0 01-5.352 4.118zM15.917 13h-1.946c-.089 1.546-.383 2.97-.837 4.118A6.004 6.004 0 0015.917 13zM4.083 13h1.946c.089 1.546.383 2.97.837 4.118A6.004 6.004 0 014.083 13zM6.029 7c.09-1.414.374-2.649.763-3.556.238-.56.497-.948.734-1.182A8.026 8.026 0 004.083 7h1.946z" clip-rule="evenodd"/></svg>
+                                    ${escapeHtml(c.domain)}
+                                </span>
+                            </div>
+                            <div class="meta-actions">
+                                <button class="danger-btn" onclick="deleteCookie(${c.id})">Delete Group</button>
+                            </div>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(metaRow);
+
+                // 2. KV Rows
+                pairs.forEach(pair => {
                     const tr = document.createElement('tr');
-
-                    if (index === 0) {
-                        // Main columns with RowSpan
-                        tr.innerHTML = `
-                            <td class="timestamp" rowspan="${rowSpan}">${timeStr}</td>
-                            <td class="domain-col" rowspan="${rowSpan}">${escapeHtml(c.domain)}</td>
-                            <td class="name-col">${escapeHtml(pair.k)}</td>
-                            <td class="value-col">${escapeHtml(pair.v)}</td>
-                            <td rowspan="${rowSpan}" style="text-align:center; vertical-align:middle;">
-                                <button class="delete-btn-sm" style="color:var(--danger);" onclick="deleteCookie(${c.id})">&times;</button>
-                            </td>
-                        `;
-                    } else {
-                        // Sub rows
-                        tr.innerHTML = `
-                            <td class="name-col">${escapeHtml(pair.k)}</td>
-                            <td class="value-col">${escapeHtml(pair.v)}</td>
-                        `;
-                    }
+                    tr.className = 'kv-row';
+                    tr.innerHTML = `
+                        <td class="name-col">${escapeHtml(pair.k)}</td>
+                        <td class="value-col">${escapeHtml(pair.v)}</td>
+                    `;
                     tbody.appendChild(tr);
                 });
+
+                table.appendChild(tbody);
             });
         }
 
@@ -424,7 +428,7 @@
             });
 
             const msg = document.getElementById('configMsg');
-            msg.innerText = "Credentials saved securely.";
+            msg.innerText = "Credentials saved.";
             setTimeout(() => msg.innerText = "", 3000);
             loadConfig();
         }
