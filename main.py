@@ -26,11 +26,19 @@ async def start_proxy():
     
     opts = options.Options(
         listen_host='0.0.0.0', 
-        listen_port=PROXY_PORT,
-        onboarding_host=onboarding_host
+        listen_port=PROXY_PORT
     )
     
     master = DumpMaster(opts, with_termlog=False, with_dumper=False)
+    
+    # helper for mitmproxy < 6 (not needed here but good practice to check)
+    # or just set it directly as we know it's a recent version
+    if hasattr(master.options, "onboarding_host"):
+        master.options.onboarding_host = onboarding_host
+    else:
+        # Fallback or log if option doesn't exist
+        print("Warning: onboarding_host option not found in mitmproxy options")
+
     master.addons.add(CookieCatcherAddon())
     
     try:
