@@ -4,6 +4,14 @@ from datetime import datetime
 
 DB_PATH = "cookies.db"
 
+# Check if /data volume is mounted, if yes, use that for persistence
+if os.path.exists("/data") and os.path.isdir("/data"):
+    DB_PATH = "/data/cookies.db"
+elif os.environ.get("DATA_PATH"):
+    DB_PATH = os.environ.get("DATA_PATH")
+
+print(f"Using database at: {DB_PATH}")
+
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()

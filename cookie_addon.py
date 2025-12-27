@@ -129,7 +129,7 @@ class CookieCatcherAddon:
         watched_domains = database.get_domains()
         
         # Logging for debug
-        print(f"[{stage}] Checking host: {host} against {watched_domains}")
+        logging.info(f"[{stage}] Checking host: {host} against {watched_domains}")
 
         # Check if host matches any watched domain (exact or suffix)
         matched = False
@@ -145,18 +145,18 @@ class CookieCatcherAddon:
                 break
         
         if not matched:
-            print(f"[{stage}] Host {host} NOT matched.")
+            logging.debug(f"[{stage}] Host {host} NOT matched.")
             return
 
-        print(f"[{stage}] Host {host} MATCHED. Checking cookies...")
+        logging.info(f"[{stage}] Host {host} MATCHED. Checking cookies...")
 
         # Check for cookies
         # message.cookies is a MultiDict
         if not message.cookies:
-            print(f"[{stage}] No cookies found in message.")
+            logging.info(f"[{stage}] No cookies found in message.")
             return
 
-        print(f"[{stage}] Cookies detected: {message.cookies}")
+        logging.info(f"[{stage}] Cookies detected: {message.cookies}")
 
         # Format cookies for storage
         cookie_header = message.headers.get("Cookie", "")
@@ -175,8 +175,7 @@ class CookieCatcherAddon:
             # Upsert
             # Use host as the domain key
             database.upsert_cookie(host, cookie_header, cookie_header)
-            print(f"[{stage}] Captured cookie for {host}: {cookie_header}")
-            logging.info(f"Captured cookie for {host}")
+            logging.info(f"[{stage}] Captured cookie for {host}: {cookie_header}")
 
 addons = [
     CookieCatcherAddon()

@@ -8,15 +8,25 @@ from web_server import app
 import database
 import os
 
+import logging
+import sys
+
 # Configuration
 PROXY_PORT = 8080
 WEB_PORT = 8081
+
+# Configure logging to stdout
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
 
 def start_web_server():
     # Run uvicorn in a separate thread because it likes to be in control of the loop if using uvicorn.run
     # Or strict asyncio with uvicorn.Server
     print(f"Starting Web Management UI at http://localhost:{WEB_PORT}")
-    uvicorn.run(app, host="0.0.0.0", port=WEB_PORT, log_level="error")
+    uvicorn.run(app, host="0.0.0.0", port=WEB_PORT, log_level="info")
 
 async def start_proxy():
     print(f"Starting Proxy at http://localhost:{PROXY_PORT}")
