@@ -31,6 +31,13 @@ def init_db():
     # Table for system config (proxy_auth)
     c.execute('''CREATE TABLE IF NOT EXISTS config
                  (key TEXT PRIMARY KEY, value TEXT)''')
+    
+    # Table for addon configuration
+    c.execute('''CREATE TABLE IF NOT EXISTS addons
+                 (name TEXT PRIMARY KEY,
+                  enabled INTEGER DEFAULT 0,
+                  config TEXT)''')
+    
     conn.commit()
     conn.close()
 
@@ -120,5 +127,72 @@ def get_cookies():
     try:
         c.execute("SELECT * FROM cookies ORDER BY last_updated DESC")
         return [dict(row) for row in c.fetchall()]
+    finally:
+        conn.close()
+
+# ========== Addon Management ==========
+
+import json
+
+def get_addons():
+    """Get all addon configurations."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    try:
+        c.execute("SELECT * FROM addons")
+        rows = c.fetchall()
+        result = []
+        for row in rows:
+            item = dict(row)
+            item["enabled"] = bool(item["enabled"])
+            if item.get("config"):
+                item["config"] = json.loads(item["config"])
+            else:
+                item["config"] = {}
+            result.append(item)
+        return result
+    finally:
+        conn.close()
+
+def get_addon(name):
+    """Get a specific addon configuration."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    try:
+        c.execute("SELECT * FROM addons WHERE name=?", (name,))
+        row = c.fetchone()
+        if row:
+            item = dict(row)
+            item["enabled"] = bool(item["enabled"])
+            if item.get("config"):
+                item["config"] = json.loads(item["config"])
+            else:
+                item["config"] = {}
+            return item
+        return None
+    finally:
+        conn.close()
+
+def save_addon(name, enabled=False, config=None):
+    """Save addon configuration."""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    try:
+        config_json = json.dumps(config or {})
+        c.execute("""INSERT OR REPLACE INTO addons (name, enabled, config) 
+                     VALUES (?, ?, ?)""", (name, 1 if enabled else 0, config_json))
+        conn.commit()
+    finally:
+        conn.close()
+
+def delete_addon(name):
+    """Delete addon configuration."""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    try:
+        c.execute("DELETE FROM addons WHERE name=?", (name,))
+        conn.commit()
     finally:
         conn.close()

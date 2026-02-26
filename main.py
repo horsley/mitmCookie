@@ -3,10 +3,10 @@ import threading
 import uvicorn
 from mitmproxy import options
 from mitmproxy.tools.dump import DumpMaster
-from cookie_addon import CookieCatcherAddon
 from web_server import app
 import database
 import os
+import importlib
 
 import logging
 import sys
@@ -22,9 +22,27 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stdout)]
 )
 
+# Available addons registry
+ADDONS_REGISTRY = {}
+
+def register_addon(name, addon_class):
+    """Register an addon in the global registry."""
+    ADDONS_REGISTRY[name] = addon_class
+    logging.info(f"Registered addon: {name}")
+
+def load_addons():
+    """Import and register all addons."""
+    # Import built-in addons
+    from addons.cookie_catcher import CookieCatcherAddon
+    from addons.eruda_inject import ErudaInjectAddon
+    
+    register_addon("cookie_catcher", CookieCatcherAddon)
+    register_addon("eruda_inject", ErudaInjectAddon)
+
+# Global addon instances
+addon_instances = {}
+
 def start_web_server():
-    # Run uvicorn in a separate thread because it likes to be in control of the loop if using uvicorn.run
-    # Or strict asyncio with uvicorn.Server
     print(f"Starting Web Management UI at http://localhost:{WEB_PORT}")
     uvicorn.run(app, host="0.0.0.0", port=WEB_PORT, log_level="info")
 
@@ -34,7 +52,6 @@ async def start_proxy():
     onboarding_host = os.environ.get("MITM_ONBOARDING_HOST", "mitm.it")
     print(f"Onboarding host set to: {onboarding_host}")
     
-    # Check for persistent configuration directory
     conf_dir = "~/.mitmproxy"
     if os.path.exists("/data") and os.path.isdir("/data"):
         conf_dir = "/data/mitmproxy"
@@ -50,23 +67,52 @@ async def start_proxy():
     
     master = DumpMaster(opts, with_termlog=False, with_dumper=False)
     
-    # helper for mitmproxy < 6 (not needed here but good practice to check)
-    # or just set it directly as we know it's a recent version
     if hasattr(master.options, "onboarding_host"):
         master.options.onboarding_host = onboarding_host
     else:
-        # Fallback or log if option doesn't exist
         print("Warning: onboarding_host option not found in mitmproxy options")
 
-    master.addons.add(CookieCatcherAddon())
-    
+    # Load enabled addons from database
+    db_addons = database.get_addons()
+    for addon_config in db_addons:
+        name = addon_config["name"]
+        enabled = addon_config["enabled"]
+        config = addon_config.get("config", {})
+        
+        if name in ADDONS_REGISTRY:
+            addon_class = ADDONS_REGISTRY[name]
+            instance = addon_class()
+            instance.config = config
+            instance.enabled = enabled
+            
+            if enabled:
+                try:
+                    instance.load(master)
+                    addon_instances[name] = instance
+                    print(f"Loaded and enabled addon: {name}")
+                except Exception as e:
+                    print(f"Failed to load addon {name}: {e}")
+            else:
+                print(f"Addon {name} is disabled")
+        else:
+            print(f"Unknown addon: {name}")
+
     try:
         await master.run()
     except KeyboardInterrupt:
         master.shutdown()
 
+def reload_addons():
+    """Reload addon instances (called when config changes)."""
+    # This would require stopping/starting the proxy or dynamic reloading
+    # For now, this is a placeholder for hot-reload functionality
+    pass
+
 def main():
     database.init_db()
+    
+    # Register addons
+    load_addons()
     
     # Start Web Server in a daemon thread
     t = threading.Thread(target=start_web_server)
