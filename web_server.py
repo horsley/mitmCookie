@@ -91,29 +91,23 @@ def delete_cookie(cookie_id: int):
 
 # ========== Addons API ==========
 
-ADDONS_REGISTRY = {}
+# Import addons directly to avoid circular import issues
+from addons.cookie_catcher import CookieCatcherAddon
+from addons.eruda_inject import ErudaInjectAddon
 
-def get_addons_registry():
-    """Lazy load addon registry to avoid circular imports."""
-    global ADDONS_REGISTRY
-    if not ADDONS_REGISTRY:
-        try:
-            from main import ADDONS_REGISTRY as registry
-            ADDONS_REGISTRY = registry
-        except ImportError:
-            pass
-    return ADDONS_REGISTRY
+ADDONS_REGISTRY = {
+    "cookie_catcher": CookieCatcherAddon,
+    "eruda_inject": ErudaInjectAddon,
+}
 
 @app.get("/api/addons")
 def get_addons():
     """Get all addons with their status."""
-    registry = get_addons_registry()
-    
     db_addons = database.get_addons()
     enabled_map = {a["name"]: a for a in db_addons}
     
     result = []
-    for name, addon_class in registry.items():
+    for name, addon_class in ADDONS_REGISTRY.items():
         instance = addon_class()
         if name in enabled_map:
             db_config = enabled_map[name]
