@@ -43,22 +43,25 @@ def load_addons():
 addon_instances = {}
 
 def start_web_server():
-    print(f"Starting Web Management UI at http://localhost:{WEB_PORT}")
+    logging.info(f"Starting Web Management UI at http://localhost:{WEB_PORT}")
     uvicorn.run(app, host="0.0.0.0", port=WEB_PORT, log_level="info")
 
 async def start_proxy():
-    print(f"Starting Proxy at http://localhost:{PROXY_PORT}")
-    
+    logging.info(f"Starting Proxy at http://localhost:{PROXY_PORT}")
+
     onboarding_host = os.environ.get("MITM_ONBOARDING_HOST", "mitm.it")
-    print(f"Onboarding host set to: {onboarding_host}")
-    
+    logging.info(f"Onboarding host set to: {onboarding_host}")
+    logging.info(f"Database path resolved to: {database.DB_PATH}")
+
     conf_dir = "~/.mitmproxy"
     if os.path.exists("/data") and os.path.isdir("/data"):
         conf_dir = "/data/mitmproxy"
         if not os.path.exists(conf_dir):
             os.makedirs(conf_dir)
-        print(f"Using persistent mitmproxy config dir: {conf_dir}")
-    
+        logging.info(f"Using persistent mitmproxy config dir: {conf_dir}")
+    else:
+        logging.info(f"Using default mitmproxy config dir: {conf_dir}")
+
     opts = options.Options(
         listen_host='0.0.0.0', 
         listen_port=PROXY_PORT,
@@ -66,14 +69,19 @@ async def start_proxy():
     )
     
     master = DumpMaster(opts, with_termlog=False, with_dumper=False)
-    
+
     if hasattr(master.options, "onboarding_host"):
         master.options.onboarding_host = onboarding_host
+        logging.info(f"Configured mitmproxy onboarding_host={onboarding_host}")
     else:
-        print("Warning: onboarding_host option not found in mitmproxy options")
+        logging.warning("onboarding_host option not found in mitmproxy options")
 
     # Load enabled addons from database
     db_addons = database.get_addons()
+    logging.info(f"Addon configs from database: {db_addons}")
+    if not db_addons:
+        logging.warning("No addon configs found in database. No addons will be loaded unless configured via UI.")
+
     for addon_config in db_addons:
         name = addon_config["name"]
         enabled = addon_config["enabled"]
@@ -84,18 +92,19 @@ async def start_proxy():
             instance = addon_class()
             instance.config = config
             instance.enabled = enabled
-            
+            logging.info(f"Preparing addon name={name} enabled={enabled} config={config}")
+
             if enabled:
                 try:
                     instance.load(master)
                     addon_instances[name] = instance
-                    print(f"Loaded and enabled addon: {name}")
+                    logging.info(f"Loaded and enabled addon: {name}")
                 except Exception as e:
-                    print(f"Failed to load addon {name}: {e}")
+                    logging.exception(f"Failed to load addon {name}: {e}")
             else:
-                print(f"Addon {name} is disabled")
+                logging.info(f"Addon {name} is disabled")
         else:
-            print(f"Unknown addon: {name}")
+            logging.warning(f"Unknown addon in database: {name}")
 
     try:
         await master.run()
@@ -110,10 +119,13 @@ def reload_addons():
 
 def main():
     database.init_db()
-    
+    logging.info("Database initialized")
+    logging.info(f"Registered addon registry before load: {list(ADDONS_REGISTRY.keys())}")
+
     # Register addons
     load_addons()
-    
+    logging.info(f"Addon registry after load: {list(ADDONS_REGISTRY.keys())}")
+
     # Start Web Server in a daemon thread
     t = threading.Thread(target=start_web_server)
     t.daemon = True
