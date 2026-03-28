@@ -28,7 +28,6 @@ ADDONS_REGISTRY = {}
 def register_addon(name, addon_class):
     """Register an addon in the global registry."""
     ADDONS_REGISTRY[name] = addon_class
-    logging.info(f"Registered addon: {name}")
 
 def load_addons():
     """Import and register all addons."""
@@ -50,17 +49,12 @@ async def start_proxy():
     logging.info(f"Starting Proxy at http://localhost:{PROXY_PORT}")
 
     onboarding_host = os.environ.get("MITM_ONBOARDING_HOST", "mitm.it")
-    logging.info(f"Onboarding host set to: {onboarding_host}")
-    logging.info(f"Database path resolved to: {database.DB_PATH}")
 
     conf_dir = "~/.mitmproxy"
     if os.path.exists("/data") and os.path.isdir("/data"):
         conf_dir = "/data/mitmproxy"
         if not os.path.exists(conf_dir):
             os.makedirs(conf_dir)
-        logging.info(f"Using persistent mitmproxy config dir: {conf_dir}")
-    else:
-        logging.info(f"Using default mitmproxy config dir: {conf_dir}")
 
     opts = options.Options(
         listen_host='0.0.0.0', 
@@ -72,15 +66,11 @@ async def start_proxy():
 
     if hasattr(master.options, "onboarding_host"):
         master.options.onboarding_host = onboarding_host
-        logging.info(f"Configured mitmproxy onboarding_host={onboarding_host}")
     else:
         logging.warning("onboarding_host option not found in mitmproxy options")
 
     # Load enabled addons from database
     db_addons = database.get_addons()
-    logging.info(f"Addon configs from database: {db_addons}")
-    if not db_addons:
-        logging.warning("No addon configs found in database. No addons will be loaded unless configured via UI.")
 
     for addon_config in db_addons:
         name = addon_config["name"]
@@ -92,7 +82,6 @@ async def start_proxy():
             instance = addon_class()
             instance.config = config
             instance.enabled = enabled
-            logging.info(f"Preparing addon name={name} enabled={enabled} config={config}")
 
             if enabled:
                 try:
@@ -119,12 +108,9 @@ def reload_addons():
 
 def main():
     database.init_db()
-    logging.info("Database initialized")
-    logging.info(f"Registered addon registry before load: {list(ADDONS_REGISTRY.keys())}")
 
     # Register addons
     load_addons()
-    logging.info(f"Addon registry after load: {list(ADDONS_REGISTRY.keys())}")
 
     # Start Web Server in a daemon thread
     t = threading.Thread(target=start_web_server)
