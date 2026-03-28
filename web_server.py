@@ -20,7 +20,15 @@ def startup_event():
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
-    response = templates.TemplateResponse("index.html", {"request": request})
+    onboarding_host = os.environ.get("MITM_ONBOARDING_HOST", "mitm.it")
+    response = templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "onboarding_host": onboarding_host,
+            "onboarding_url": f"http://{onboarding_host}",
+        },
+    )
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"

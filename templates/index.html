@@ -402,11 +402,44 @@
             color: #92400e;
             margin-bottom: 1rem;
         }
+
+        .onboarding-note {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.25rem;
+            color: #1e3a8a;
+        }
+
+        .onboarding-note strong {
+            color: #1e40af;
+        }
+
+        .onboarding-link {
+            display: inline-block;
+            margin-top: 0.5rem;
+            color: #1d4ed8;
+            font-weight: 600;
+            text-decoration: none;
+            word-break: break-all;
+        }
+
+        .onboarding-link:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 
 <body>
     <h1>MITM Proxy Manager</h1>
+
+    <div class="onboarding-note">
+        <strong>Install Root Certificate</strong><br>
+        Open the onboarding page using <strong>HTTP</strong> (not HTTPS):<br>
+        <a class="onboarding-link" href="{{ onboarding_url }}" target="_blank">{{ onboarding_url }}</a><br>
+        Current onboarding host: <code>{{ onboarding_host }}</code>
+    </div>
 
     <div class="container">
         <div class="sidebar">
