@@ -6,6 +6,7 @@ from mitmproxy.proxy import layers
 import database
 import logging
 import base64
+import os
 
 from . import BaseAddon
 
@@ -14,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 class CookieCatcherAddon(BaseAddon):
     """Captures cookies from request headers for configured domains."""
-    
+
     name = "cookie_catcher"
     description = "Capture cookies from HTTP requests"
     version = "1.0.0"
@@ -34,10 +35,23 @@ class CookieCatcherAddon(BaseAddon):
     def configure(self, options):
         """Configure addon."""
         pass
-    
+
+    def get_onboarding_hosts(self):
+        hosts = {"mitm.it"}
+        custom_host = os.environ.get("MITM_ONBOARDING_HOST")
+        if custom_host:
+            hosts.add(custom_host.strip().lower())
+        return hosts
+
+    def is_onboarding_host(self, host: str) -> bool:
+        return host.lower() in self.get_onboarding_hosts()
+
     def tls_clienthello(self, data: layers.tls.ClientHelloData):
         sni = data.client_hello.sni
         if not sni:
+            return
+
+        if self.is_onboarding_host(sni):
             return
 
         if not self.is_watched(sni):
@@ -126,6 +140,9 @@ class CookieCatcherAddon(BaseAddon):
 
     def response(self, flow: http.HTTPFlow):
         host = flow.request.host
+        if self.is_onboarding_host(host):
+            return
+
         if not self.is_watched(host):
             return
 
@@ -137,6 +154,9 @@ class CookieCatcherAddon(BaseAddon):
 
     def check_and_process(self, flow, message, stage):
         host = flow.request.host
+
+        if self.is_onboarding_host(host):
+            return
 
         if not self.is_watched(host):
             return
