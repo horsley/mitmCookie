@@ -96,7 +96,7 @@ async def start_proxy():
 
             if enabled:
                 try:
-                    instance.load(master)
+                    master.addons.add(instance)
                     addon_instances[name] = instance
                     logging.info(f"Loaded and enabled addon: {name}")
                 except Exception as e:

@@ -21,11 +21,11 @@ class BaseAddon(ABC):
         self.config = {}
     
     @abstractmethod
-    def load(self, master):
+    def load(self, loader):
         """
-        Called when addon is loaded by mitmproxy.
-        Register your handlers here.
-        Example: master.addons.add(self)
+        Called by mitmproxy when the addon is loaded.
+        Use this hook for initialization/logging only.
+        Registration is handled by the addon manager.
         """
         pass
     

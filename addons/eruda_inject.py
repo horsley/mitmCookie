@@ -31,8 +31,7 @@ class ErudaInjectAddon(BaseAddon):
             "eruda_version": "3"
         }
     
-    def load(self, master):
-        master.addons.add(self)
+    def load(self, loader):
         logger.info(f"ErudaInjectAddon loaded")
     
     def configure(self, options):

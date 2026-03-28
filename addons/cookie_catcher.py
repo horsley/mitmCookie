@@ -27,9 +27,8 @@ class CookieCatcherAddon(BaseAddon):
             "capture_responses": False
         }
     
-    def load(self, master):
-        """Register handlers with mitmproxy."""
-        master.addons.add(self)
+    def load(self, loader):
+        """Called by mitmproxy when addon is loaded."""
         logger.info(f"CookieCatcherAddon loaded with config={self.config} enabled={self.enabled}")
     
     def configure(self, options):
